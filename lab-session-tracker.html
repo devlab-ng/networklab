@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network Lab — Session Tracker</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #f6f7f9; color: #1c2330; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 26px; margin: 8px 0 4px; }
+  .sub { color: #5a6477; margin: 0 0 16px; }
+  .progress-box { background: #fff; border: 1px solid #dde2ea; border-radius: 12px; padding: 14px 16px; position: sticky; top: 8px; z-index: 5; box-shadow: 0 2px 10px rgba(20,30,50,.06); }
+  .progress-label { font-weight: 600; margin-bottom: 8px; }
+  .bar { height: 12px; background: #e7ebf1; border-radius: 999px; overflow: hidden; }
+  .bar-fill { height: 100%; width: 0%; background: #2f9e44; transition: width .25s ease; }
+  section { background: #fff; border: 1px solid #dde2ea; border-radius: 12px; padding: 6px 16px 12px; margin-top: 18px; }
+  h2 { font-size: 18px; margin: 14px 0 8px; }
+  .session { border-top: 1px solid #eef1f5; padding: 4px 0 8px; }
+  .session:first-of-type { border-top: none; }
+  .item { display: flex; gap: 10px; align-items: flex-start; padding: 6px 6px; border-radius: 8px; cursor: pointer; }
+  .item:hover { background: #f2f5f9; }
+  .item input { width: 20px; height: 20px; margin-top: 1px; accent-color: #2f9e44; flex: 0 0 auto; cursor: pointer; }
+  .item input:checked ~ .txt { text-decoration: line-through; color: #8a94a6; }
+  .item.head .txt { font-size: 16px; }
+  .tasks { margin-left: 36px; }
+  .item.sub { padding: 4px 6px; }
+  .item.sub input { width: 17px; height: 17px; }
+  .item.sub .txt { font-size: 14.5px; color: #333d4f; }
+  .item.sub input:checked ~ .txt { color: #8a94a6; }
+  .item.prep { background: #eef6ff; }
+  .item.prep:hover { background: #e0eefe; }
+  .item.gate { background: #fff8e6; margin-top: 8px; }
+  .item.gate:hover { background: #fdf1cd; }
+  .hol { color: #b07d10; font-size: 13px; }
+  .note-line { margin: 4px 6px 6px; font-size: 13.5px; color: #5a6477; font-style: italic; }
+  .note { color: #5a6477; font-size: 14px; margin-top: 18px; }
+  button.reset { margin-top: 10px; padding: 8px 14px; border-radius: 8px; border: 1px solid #c9d2de; background: #fff; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Network Lab — Session Tracker</h1>
+  <p class="sub">70 sessions · 30 minutes each · Wednesday, Friday, Saturday, Sunday · Wed 25 Nov 2026 → Fri 26 Mar 2027. Every session lists its detailed tasks — tick each one as you finish it and the text strikes through. The blue item is the day-before check. Your ticks are saved in this browser on this device.</p>
+  <div class="progress-box">
+    <div class="progress-label"><span id="done-count">0</span> of 70 sessions done · <span id="task-count">0</span> tasks ticked · <span id="pct">0</span>%</div>
+    <div class="bar"><div class="bar-fill" id="bar-fill"></div></div>
+  </div>
+<section><h2>Phase 0 — Foundations (Sessions 1–6)</h2>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-1"><span class="txt"><strong>Session 1 — Wed 25 Nov 2026</strong> — Decide the host, prep the install media</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-1-0"><span class="txt">10 min: confirm your host choice (workstation vs spare machine) and write it in the repo&#x27;s architecture doc.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-1-1"><span class="txt">15 min: download the Proxmox VE ISO (`proxmox-ve_9.2-1.iso`, 1.71 GB) and verify its SHA256 (`4e88fe416df9b527624a175f24c9aa07c714d3332afb1ee3dbf3879573ef2c6c`), then just keep the file.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-1-2"><span class="txt">5 min: lab journal entry #1 + commit.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-1"><span class="txt">✔ <strong>Day before (Tue 24 Nov):</strong> host machine identified and free to use.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-2"><span class="txt"><strong>Session 2 — Fri 27 Nov 2026</strong> — Install Proxmox VE, nested</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-2-0"><span class="txt">25 min: create the Proxmox VM in your workstation hypervisor with nested virtualization enabled, attach `proxmox-ve_9.2-1.iso` to it, install Proxmox inside the VM, and write down the real management IP the VM&#x27;s virtual network assigns (not 10.10.10.2 — that was the bare-metal address).</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-2-1"><span class="txt">5 min: journal + note the root password in your password manager.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-2"><span class="txt">✔ <strong>Day before (Thu 26 Nov):</strong> ISO downloaded and SHA256-verified in Session 1; you know which hypervisor is on the workstation (VirtualBox or VMware Workstation) and that nested virtualization can be enabled in it; workstation RAM and free disk space known (plan wants 16 GB+ RAM, ~100 GB free).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-3"><span class="txt"><strong>Session 3 — Sat 28 Nov 2026</strong> — Proxmox first login, updates, ISO library</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-3-0"><span class="txt">10 min: log into the web UI, dismiss the subscription notice, run updates.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-3-1"><span class="txt">15 min: start downloads of Debian and OPNsense ISOs into Proxmox storage (downloads may finish after the session — that&#x27;s fine).</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-3-2"><span class="txt">5 min: create your non-root admin user.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-3"><span class="txt">✔ <strong>Day before:</strong> Proxmox web UI reachable from your workstation browser; at least 100 GB free storage on the host.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-4"><span class="txt"><strong>Session 4 — Sun 29 Nov 2026</strong> — GitHub: publish the repo, clone it, SSH keys</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-4-0"><span class="txt">10 min: create the GitHub repo (with your mentor&#x27;s help in chat) and push the existing project.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-4-1"><span class="txt">10 min: clone it to your workstation.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-4-2"><span class="txt">10 min: generate SSH keys, add to GitHub and to Proxmox; test a key-only login.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-4"><span class="txt">✔ <strong>Day before:</strong> you have a free GitHub account (create one if not — 5 min, needs only an email); Git installed on your workstation.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-5"><span class="txt"><strong>Session 5 — Wed 2 Dec 2026</strong> — Terraform on your workstation + the toy example</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-5-0"><span class="txt">10 min: install Terraform + VS Code with the Terraform extension.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-5-1"><span class="txt">10 min: write the toy example (one local file resource).</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-5-2"><span class="txt">10 min: `init` → `plan` → `apply`, and read every line of the plan output.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-5"><span class="txt">✔ <strong>Day before:</strong> repo cloned (Session 4); you have admin rights on your workstation to install software.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-6"><span class="txt"><strong>Session 6 — Fri 4 Dec 2026</strong> — Destroy the toy, learn subnetting, finalise the addressing plan</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-6-0"><span class="txt">10 min: `terraform destroy` on the toy; re-apply it once more from scratch.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-6-1"><span class="txt">15 min: subnetting study — work through the plan&#x27;s VLAN table (10.10.10.0/24 → 10.10.60.0/24) until you can say what each /24 contains.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-6-2"><span class="txt">5 min: confirm or amend the addressing plan in `docs/architecture.md` + commit.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-6"><span class="txt">✔ <strong>Day before:</strong> toy example still applied from Session 5; architecture doc read once through.</span></label>
+</div></div>
+<label class="item gate"><input type="checkbox" data-key="gate-0"><span class="txt">🎓 <strong>Phase 0 gate</strong> — explain Terraform state, switch vs router vs firewall, and how a device gets an IP and finds DNS; show your mentor the toy apply/destroy and a Proxmox login screenshot.</span></label>
+</section>
+<section><h2>Phase 1 — Terraform Core (Sessions 7–14)</h2>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-7"><span class="txt"><strong>Session 7 — Sat 5 Dec 2026</strong> — A least-privilege identity for Terraform</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-7-0"><span class="txt">20 min: in Proxmox, create the `terraform@pve` user, role and API token with only the permissions the provider needs.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-7-1"><span class="txt">10 min: store the token in a local secrets file (never in the repo) and test it with one API call.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-7"><span class="txt">✔ <strong>Day before:</strong> Proxmox admin login works; password manager ready to store the token.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-8"><span class="txt"><strong>Session 8 — Sun 6 Dec 2026</strong> — Scaffold the Terraform layout</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-8-0"><span class="txt">20 min: create `terraform/modules/{vm,network,keycloak}` and `terraform/environments/lab` skeleton files.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-8-1"><span class="txt">10 min: write `.gitignore` (state, tfvars, keys) and `terraform.tfvars.example`; commit.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-8"><span class="txt">✔ <strong>Day before:</strong> repo cloned and clean (`git status` shows nothing pending).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-9"><span class="txt"><strong>Session 9 — Wed 9 Dec 2026</strong> — Build the Debian cloud-init template</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-9-0"><span class="txt">25 min: create one Debian VM by hand, install cloud-init + qemu guest agent, convert to template.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-9-1"><span class="txt">5 min: document the template&#x27;s name/ID in the repo.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-9"><span class="txt">✔ <strong>Day before:</strong> Debian ISO finished downloading into Proxmox storage (check storage content list).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-10"><span class="txt"><strong>Session 10 — Fri 11 Dec 2026</strong> — Write the VM module</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-10-0"><span class="txt">25 min: write the `vm` module — variables for name, CPU, RAM, disk, network; one VM resource using the template.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-10-1"><span class="txt">5 min: `terraform fmt` + `validate`.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-10"><span class="txt">✔ <strong>Day before:</strong> template from Session 9 exists; Terraform token from Session 7 works.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-11"><span class="txt"><strong>Session 11 — Sat 12 Dec 2026</strong> — First VM from code: clab01</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-11-0"><span class="txt">10 min: wire the module into `environments/lab/main.tf`.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-11-1"><span class="txt">15 min: `plan`, read it fully, `apply`.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-11-2"><span class="txt">5 min: SSH into clab01 with your key.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-11"><span class="txt">✔ <strong>Day before:</strong> module validates; you have 30 uninterrupted minutes (first apply is not the day to be rushed).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-12"><span class="txt"><strong>Session 12 — Sun 13 Dec 2026</strong> — Second VM + outputs</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-12-0"><span class="txt">20 min: add a second module call (a placeholder server VM) and `outputs.tf` (IPs, VM IDs).</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-12-1"><span class="txt">10 min: apply, verify outputs, commit.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-12"><span class="txt">✔ <strong>Day before:</strong> clab01 from Session 11 is running and reachable.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-13"><span class="txt"><strong>Session 13 — Wed 16 Dec 2026</strong> — Drift day: break it on purpose</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-13-0"><span class="txt">10 min: run `plan` — it must say &quot;no changes&quot;; screenshot it.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-13-1"><span class="txt">10 min: change one VM&#x27;s RAM in the Proxmox UI, run `plan` again and watch Terraform detect drift.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-13-2"><span class="txt">10 min: revert by editing code (not the UI) and applying.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-13"><span class="txt">✔ <strong>Day before:</strong> both VMs applied and `git status` clean.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-14"><span class="txt"><strong>Session 14 — Fri 18 Dec 2026</strong> — Destroy, recreate, Phase 1 gate</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-14-0"><span class="txt">20 min: `terraform destroy` one VM, recreate it from code alone, verify SSH.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-14-1"><span class="txt">10 min: journal the whole phase: what plan/apply/drift actually mean to you now.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-14"><span class="txt">✔ <strong>Day before:</strong> backups of nothing needed — the VM is disposable by design; confirm you picked the disposable VM, not the template.</span></label>
+</div></div>
+<label class="item gate"><input type="checkbox" data-key="gate-1"><span class="txt">🎓 <strong>Phase 1 gate</strong> — show a clean no-changes plan; explain what happens if the state file is deleted; explain why Terraform gets its own least-privilege user.</span></label>
+</section>
+<section><h2>Phase 2 — The Network Build (Sessions 15–24)</h2>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-15"><span class="txt"><strong>Session 15 — Sat 19 Dec 2026</strong> — VLANs in code, part 1</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-15-0"><span class="txt">25 min: in the `network` module, define the Proxmox bridge + VLAN plan from the addressing table.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-15-1"><span class="txt">5 min: `fmt`/`validate`/`plan` — do not apply yet.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-15"><span class="txt">✔ <strong>Day before:</strong> addressing plan final (Session 6); Proxmox network page reviewed once so the terms are familiar.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-16"><span class="txt"><strong>Session 16 — Sun 20 Dec 2026</strong> — VLANs in code, part 2: apply</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-16-0"><span class="txt">20 min: apply the network module; verify bridges/VLANs in the Proxmox UI.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-16-1"><span class="txt">10 min: attach clab01 to the Sim VLAN temporarily and confirm it still works; journal + commit.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-16"><span class="txt">✔ <strong>Day before:</strong> a maintenance mindset — if networking breaks, you have physical/local console access to the host.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-17"><span class="txt"><strong>Session 17 — Wed 23 Dec 2026</strong> — Install OPNsense on fw01</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-17-0"><span class="txt">25 min: create fw01 from the OPNsense ISO (manual install — write down in the README which parts are not Terraform-managed and why).</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-17-1"><span class="txt">5 min: set the LAN interface to the Mgmt segment and note the temporary password in your password manager.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-17"><span class="txt">✔ <strong>Day before:</strong> OPNsense ISO present in Proxmox storage (Session 3); you know fw01 needs one virtual NIC per segment (6–7 NICs) — check your plan&#x27;s interface list.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-18"><span class="txt"><strong>Session 18 — Fri 25 Dec 2026</strong> — OPNsense interfaces for every segment <span class="hol">(holiday — slide if needed)</span></span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-18-0"><span class="txt">25 min: assign and name all interfaces (Mgmt/Servers/Sim/IoT/Guest/WireGuard) with their gateway IPs from the addressing plan.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-18-1"><span class="txt">5 min: log in from the Mgmt segment only; confirm WAN admin is NOT reachable.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-18"><span class="txt">✔ <strong>Day before:</strong> addressing plan open beside you; fw01 console accessible.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-19"><span class="txt"><strong>Session 19 — Sat 26 Dec 2026</strong> — DHCP + DNS per segment</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-19-0"><span class="txt">20 min: enable DHCP on Servers/Sim/IoT/Guest with the planned ranges.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-19-1"><span class="txt">10 min: enable the DNS resolver; test lookup + lease from a lab VM.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-19"><span class="txt">✔ <strong>Day before:</strong> a test VM (clab01) can be moved between VLANs quickly for testing.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-20"><span class="txt"><strong>Session 20 — Sun 27 Dec 2026</strong> — Firewall rules, part 1: default-deny + management</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-20-0"><span class="txt">10 min: read `configs/opnsense-rule-plan.md` fully.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-20-1"><span class="txt">20 min: set inter-VLAN default-deny and the Mgmt allow rules, each with a comment stating its reason.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-20"><span class="txt">✔ <strong>Day before:</strong> rule plan read once already (this is the second read); you accept that lab devices will lose cross-segment access until rules are done — that&#x27;s the point.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-21"><span class="txt"><strong>Session 21 — Wed 30 Dec 2026</strong> — Firewall rules, part 2: egress rules</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-21-0"><span class="txt">25 min: Servers → internet (updates only), IoT → internet only, Guest → internet only, Sim → nothing outside Sim except what detection phases will need.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-21-1"><span class="txt">5 min: snapshot the config (System → Configuration → Backups).</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-21"><span class="txt">✔ <strong>Day before:</strong> part 1 rules applied and Mgmt access still works (don&#x27;t lock yourself out — have console access ready).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-22"><span class="txt"><strong>Session 22 — Fri 1 Jan 2027</strong> — WireGuard: your only way in <span class="hol">(holiday — slide if needed)</span></span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-22-0"><span class="txt">20 min: configure the WireGuard instance + one peer on OPNsense.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-22-1"><span class="txt">10 min: connect from your phone/laptop and reach the Mgmt segment through the tunnel.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-22"><span class="txt">✔ <strong>Day before:</strong> know your home public IP or set up a free dynamic-DNS name; WireGuard app installed on your phone.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-23"><span class="txt"><strong>Session 23 — Sat 2 Jan 2027</strong> — Negative tests, part 1</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-23-0"><span class="txt">20 min: from IoT, attempt Mgmt (must fail); from Guest, attempt Servers (must fail).</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-23-1"><span class="txt">10 min: find both blocked attempts in the firewall log and screenshot them.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-23"><span class="txt">✔ <strong>Day before:</strong> a device or VM you can place on the IoT and Guest segments for testing.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-24"><span class="txt"><strong>Session 24 — Sun 3 Jan 2027</strong> — Negative tests, part 2 + Phase 2 gate</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-24-0"><span class="txt">15 min: scan your own WAN address from outside (e.g. phone on mobile data) — only WireGuard should answer.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-24-1"><span class="txt">15 min: journal + gate prep.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-24"><span class="txt">✔ <strong>Day before:</strong> phone with mobile data available for the outside test; WireGuard tunnel working.</span></label>
+</div></div>
+<label class="item gate"><input type="checkbox" data-key="gate-2"><span class="txt">🎓 <strong>Phase 2 gate</strong> — explain blast radius — why segmentation limits a breach; show negative-test screenshots + matching firewall log lines; explain stateful vs stateless filtering using your own rules.</span></label>
+</section>
+<section><h2>Phase 3 — Routing &amp; Ansible (Sessions 25–32)</h2>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-25"><span class="txt"><strong>Session 25 — Wed 6 Jan 2027</strong> — Containerlab on clab01</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-25-0"><span class="txt">20 min: install Docker + Containerlab on clab01.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-25-1"><span class="txt">10 min: `containerlab version` + pull the FRR image (pull may run past the session — fine).</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-25"><span class="txt">✔ <strong>Day before:</strong> clab01 has internet egress via the Servers/Sim rules from Phase 2; 20 GB free disk on clab01.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-26"><span class="txt"><strong>Session 26 — Fri 8 Jan 2027</strong> — First topology: OSPF up</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-26-0"><span class="txt">20 min: deploy `topologies/containerlab/lab1.clab.yml`.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-26-1"><span class="txt">10 min: verify OSPF adjacencies on both FRR routers (`show ip ospf neighbor`).</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-26"><span class="txt">✔ <strong>Day before:</strong> FRR image pulled; topology file present in your cloned repo.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-27"><span class="txt"><strong>Session 27 — Sat 9 Jan 2027</strong> — Break-and-heal + packet capture</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-27-0"><span class="txt">15 min: shut one link, time the OSPF reconvergence, restore it.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-27-1"><span class="txt">15 min: capture the hello packets in Wireshark/tcpdump and identify them.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-27"><span class="txt">✔ <strong>Day before:</strong> topology from Session 26 still deployed; Wireshark installed on your workstation.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-28"><span class="txt"><strong>Session 28 — Sun 10 Jan 2027</strong> — Ansible: inventory</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-28-0"><span class="txt">15 min: install Ansible on your workstation (or clab01).</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-28-1"><span class="txt">15 min: write the inventory of all lab VMs and `ansible all -m ping`.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-28"><span class="txt">✔ <strong>Day before:</strong> SSH key login works to every lab VM (test one manually).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-29"><span class="txt"><strong>Session 29 — Wed 13 Jan 2027</strong> — Playbook 1: users + SSH hardening</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-29-0"><span class="txt">25 min: playbook creates your user, deploys your key, disables password + root SSH login.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-29-1"><span class="txt">5 min: run it; verify a password login now fails.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-29"><span class="txt">✔ <strong>Day before:</strong> console access to one VM as a safety net in case SSH config locks you out.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-30"><span class="txt"><strong>Session 30 — Fri 15 Jan 2027</strong> — Playbook 2: updates, NTP, idempotence</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-30-0"><span class="txt">20 min: playbook for updates policy, timezone, NTP.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-30-1"><span class="txt">10 min: run it twice — the second run must report zero changes; screenshot that.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-30"><span class="txt">✔ <strong>Day before:</strong> Playbook 1 applied cleanly to all VMs.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-31"><span class="txt"><strong>Session 31 — Sat 16 Jan 2027</strong> — An internal service to protect</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-31-0"><span class="txt">25 min: deploy a small internal wiki/notes app on the Servers VLAN.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-31-1"><span class="txt">5 min: reach it only from Mgmt; confirm IoT cannot.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-31"><span class="txt">✔ <strong>Day before:</strong> pick the app in advance (any open-source wiki you like); its container image name written down.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-32"><span class="txt"><strong>Session 32 — Sun 17 Jan 2027</strong> — Phase 3 gate</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-32-0"><span class="txt">30 min: gate review with your mentor — explain an OSPF adjacency forming step by step; show the idempotence screenshot; explain where Terraform stops and Ansible starts in your stack.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-32"><span class="txt">✔ <strong>Day before:</strong> journal entries for Sessions 25–31 written; screenshots collected in the repo.</span></label>
+</div></div>
+<label class="item gate"><input type="checkbox" data-key="gate-3"><span class="txt">🎓 <strong>Phase 3 gate</strong> — as above — this session IS the gate.</span></label>
+</section>
+<section><h2>Phase 4 — Identity: Keycloak, Managed by Terraform (Sessions 33–40)</h2>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-33"><span class="txt"><strong>Session 33 — Wed 20 Jan 2027</strong> — Keycloak VM from code</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-33-0"><span class="txt">15 min: add `iam01` via your Terraform VM module.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-33-1"><span class="txt">15 min: start Keycloak in Docker on iam01 with a temporary admin; confirm the login page loads from Mgmt only.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-33"><span class="txt">✔ <strong>Day before:</strong> VM module from Phase 1 working; Docker install steps for iam01 noted (reuse your Ansible, if you prefer).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-34"><span class="txt"><strong>Session 34 — Fri 22 Jan 2027</strong> — Realm + admin hygiene</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-34-0"><span class="txt">20 min: create realm `lab`; strong admin password into your password manager; admin access restricted to Mgmt.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-34-1"><span class="txt">10 min: explore realms/clients/users screens so the Terraform resources in the next sessions map to things you&#x27;ve seen.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-34"><span class="txt">✔ <strong>Day before:</strong> Keycloak login page reachable; password manager ready.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-35"><span class="txt"><strong>Session 35 — Sat 23 Jan 2027</strong> — Keycloak, meet Terraform</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-35-0"><span class="txt">20 min: configure the Keycloak Terraform provider (admin client) and manage the realm&#x27;s core settings as code.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-35-1"><span class="txt">10 min: `plan`/`apply`; change one realm setting in the UI, watch drift, revert via code.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-35"><span class="txt">✔ <strong>Day before:</strong> you can create a confidential client in Keycloak for Terraform (know where that screen is from Session 34).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-36"><span class="txt"><strong>Session 36 — Sun 24 Jan 2027</strong> — Groups and roles as code</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-36-0"><span class="txt">25 min: in the `keycloak` module, define groups `lab-admins` and `lab-users` with their realm roles.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-36-1"><span class="txt">5 min: apply; verify in the UI.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-36"><span class="txt">✔ <strong>Day before:</strong> provider from Session 35 applying cleanly.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-37"><span class="txt"><strong>Session 37 — Wed 27 Jan 2027</strong> — MFA as code</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-37-0"><span class="txt">20 min: define the browser flow with required TOTP in Terraform.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-37-1"><span class="txt">10 min: create a test user, enrol MFA with your authenticator app, log in.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-37"><span class="txt">✔ <strong>Day before:</strong> an authenticator app on your phone (any TOTP app); test-user details decided (name/email you&#x27;ll use).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-38"><span class="txt"><strong>Session 38 — Fri 29 Jan 2027</strong> — SSO for your wiki</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-38-0"><span class="txt">20 min: create the wiki&#x27;s OIDC client in code; configure the wiki to use Keycloak.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-38-1"><span class="txt">10 min: log into the wiki via SSO, with MFA.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-38"><span class="txt">✔ <strong>Day before:</strong> wiki from Session 31 running; its OIDC settings page located.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-39"><span class="txt"><strong>Session 39 — Sat 30 Jan 2027</strong> — Break-glass account</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-39-0"><span class="txt">15 min: create a local emergency admin for Keycloak + OPNsense, credentials printed/sealed offline (not in the repo, not in chat).</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-39-1"><span class="txt">15 min: test it actually works, then log the test in your journal (never the password).</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-39"><span class="txt">✔ <strong>Day before:</strong> an envelope + a safe physical place for the sealed credentials.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-40"><span class="txt"><strong>Session 40 — Sun 31 Jan 2027</strong> — Phase 4 gate</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-40-0"><span class="txt">30 min: gate review — walk through the OIDC login flow for your wiki step by step; then create a brand-new lab user live, via Terraform only (plan → apply → they log in with forced MFA enrolment).</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-40"><span class="txt">✔ <strong>Day before:</strong> a volunteer-or-second-browser profile to act as the &quot;new user&quot;; groups/MFA code applied cleanly.</span></label>
+</div></div>
+<label class="item gate"><input type="checkbox" data-key="gate-4"><span class="txt">🎓 <strong>Phase 4 gate</strong> — as above — this session IS the gate.</span></label>
+</section>
+<section><h2>Phase 5 — Detection: IDS, Zeek, Wazuh, Scanning (Sessions 41–50)</h2>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-41"><span class="txt"><strong>Session 41 — Wed 3 Feb 2027</strong> — Sensor VM + traffic mirror</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-41-0"><span class="txt">15 min: create `sensor01` via the VM module.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-41-1"><span class="txt">15 min: configure the traffic mirror/SPAN toward sensor01 for the Servers + Sim segments; verify packets arrive with tcpdump.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-41"><span class="txt">✔ <strong>Day before:</strong> you know your Proxmox version&#x27;s mirror options (read the Proxmox network docs section once); sensor01 sizing decided (2 vCPU/4 GB).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-42"><span class="txt"><strong>Session 42 — Fri 5 Feb 2027</strong> — Suricata</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-42-0"><span class="txt">20 min: install Suricata on sensor01, enable ET Open rules, start it on the mirror interface.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-42-1"><span class="txt">10 min: trigger a harmless test (a scan between two of your own lab hosts) and find the alert in the eve log.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-42"><span class="txt">✔ <strong>Day before:</strong> sensor01 receiving mirrored traffic (Session 41 verified with tcpdump).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-43"><span class="txt"><strong>Session 43 — Sat 6 Feb 2027</strong> — Zeek</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-43-0"><span class="txt">20 min: install Zeek on sensor01; confirm conn.log and dns.log are being written.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-43-1"><span class="txt">10 min: generate DNS lookups from a lab VM and find them in dns.log.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-43"><span class="txt">✔ <strong>Day before:</strong> Suricata running; disk space on sensor01 checked (logs grow — know your rotation settings).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-44"><span class="txt"><strong>Session 44 — Sun 7 Feb 2027</strong> — Wazuh manager, part 1</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-44-0"><span class="txt">15 min: create `siem01` via the VM module (4 vCPU / 8 GB if your host allows).</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-44-1"><span class="txt">15 min: start the Wazuh all-in-one installation (it may run past the session — start it, don&#x27;t wait on it).</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-44"><span class="txt">✔ <strong>Day before:</strong> **RAM check** — total lab allocation vs your host&#x27;s RAM; if you&#x27;re on a 16 GB workstation, tell your mentor now and the SIEM sizing gets adjusted before this session.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-45"><span class="txt"><strong>Session 45 — Wed 10 Feb 2027</strong> — Wazuh manager, part 2</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-45-0"><span class="txt">20 min: finish the install; log into the dashboard from Mgmt.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-45-1"><span class="txt">10 min: change the default passwords; note them in your password manager.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-45"><span class="txt">✔ <strong>Day before:</strong> installation from Session 44 completed without errors (check the install log).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-46"><span class="txt"><strong>Session 46 — Fri 12 Feb 2027</strong> — Agents everywhere</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-46-0"><span class="txt">25 min: extend your Ansible to install the Wazuh agent on all Linux lab VMs and enrol them.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-46-1"><span class="txt">5 min: verify all agents show &quot;active&quot; in the dashboard.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-46"><span class="txt">✔ <strong>Day before:</strong> Ansible inventory current (includes sensor01, iam01, siem01 itself excluded appropriately).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-47"><span class="txt"><strong>Session 47 — Sat 13 Feb 2027</strong> — Feed the SIEM</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-47-0"><span class="txt">25 min: ship OPNsense firewall logs and sensor01&#x27;s Suricata/Zeek logs into Wazuh.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-47-1"><span class="txt">5 min: confirm events searchable in the dashboard.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-47"><span class="txt">✔ <strong>Day before:</strong> agents active (Session 46); OPNsense remote-logging screen located.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-48"><span class="txt"><strong>Session 48 — Sun 14 Feb 2027</strong> — One incident, end to end</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-48-0"><span class="txt">20 min: run a port scan between two of your own lab hosts.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-48-1"><span class="txt">10 min: find the same event in Suricata, Zeek, the firewall log, and Wazuh — screenshot each.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-48"><span class="txt">✔ <strong>Day before:</strong> logs flowing (Session 47); nmap installed on one lab VM.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-49"><span class="txt"><strong>Session 49 — Wed 17 Feb 2027</strong> — Vulnerability scanning</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-49-0"><span class="txt">20 min: install Greenbone (OpenVAS) — start the feed sync, which will run long past the session.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-49-1"><span class="txt">10 min: meanwhile, connect Greenbone&#x27;s login to Keycloak if supported in your build, or note it as a backlog item in the tracker.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-49"><span class="txt">✔ <strong>Day before:</strong> disk space for Greenbone + feeds (30 GB+ free); patience — first feed sync takes hours, and that&#x27;s expected, not a failure.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-50"><span class="txt"><strong>Session 50 — Fri 19 Feb 2027</strong> — Triage + your first detection rule + gate</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-50-0"><span class="txt">15 min: scan the Servers VLAN; sort findings into fix / accept / false-positive, in writing, in the repo.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-50-1"><span class="txt">15 min: write one custom Wazuh rule and note its MITRE ATT&amp;CK mapping.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-50"><span class="txt">✔ <strong>Day before:</strong> Greenbone feed sync complete (check the feed status page); scan target list = Servers VLAN only.</span></label>
+</div></div>
+<label class="item gate"><input type="checkbox" data-key="gate-5"><span class="txt">🎓 <strong>Phase 5 gate</strong> — tell one generated incident as a single story across all four log sources; show one false positive you tuned and explain why the tuning didn&#x27;t blind you.</span></label>
+</section>
+<section><h2>Phase 6 — EDR, For Real (Sessions 51–60)</h2>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-51"><span class="txt"><strong>Session 51 — Sat 20 Feb 2027</strong> — EDR concepts + osquery</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-51-0"><span class="txt">15 min: study session with your mentor — telemetry, process trees, behavioural vs signature detection, EDR vs antivirus vs SIEM.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-51-1"><span class="txt">15 min: install osquery on two lab endpoints via Ansible.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-51"><span class="txt">✔ <strong>Day before:</strong> re-read your Phase 5 gate notes; endpoints for osquery chosen.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-52"><span class="txt"><strong>Session 52 — Sun 21 Feb 2027</strong> — Ask your endpoints questions</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-52-0"><span class="txt">25 min: run live osquery queries — running processes, listening ports, logged-in users, startup/persistence items — on both endpoints.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-52-1"><span class="txt">5 min: save the queries into the repo.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-52"><span class="txt">✔ <strong>Day before:</strong> osquery service running on both endpoints (`osqueryi` opens).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-53"><span class="txt"><strong>Session 53 — Wed 24 Feb 2027</strong> — osquery on a schedule</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-53-0"><span class="txt">20 min: configure scheduled query packs; ship results to Wazuh.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-53-1"><span class="txt">10 min: verify the first scheduled results arrive.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-53"><span class="txt">✔ <strong>Day before:</strong> Wazuh receiving agent data (Phase 5 still healthy — check the dashboard once).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-54"><span class="txt"><strong>Session 54 — Fri 26 Feb 2027</strong> — Velociraptor server</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-54-0"><span class="txt">20 min: deploy the Velociraptor server (on siem01 or its own VM).</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-54-1"><span class="txt">10 min: log in via SSO/Mgmt-only access; generate the client installer/config.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-54"><span class="txt">✔ <strong>Day before:</strong> decide server placement (siem01 vs new VM) based on your RAM headroom; Velociraptor release downloaded or download started.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-55"><span class="txt"><strong>Session 55 — Sat 27 Feb 2027</strong> — Your first hunt</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-55-0"><span class="txt">15 min: enrol two endpoints.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-55-1"><span class="txt">15 min: run the hunt &quot;every process that ran from a temp directory this week&quot; and read the results properly.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-55"><span class="txt">✔ <strong>Day before:</strong> Velociraptor server reachable from the endpoints&#x27; segment.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-56"><span class="txt"><strong>Session 56 — Sun 28 Feb 2027</strong> — A Windows endpoint, free</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-56-0"><span class="txt">20 min: create a Windows VM in the Sim VLAN from Microsoft&#x27;s free evaluation/developer image; snapshot it clean.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-56-1"><span class="txt">10 min: enrol it in osquery/Velociraptor.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-56"><span class="txt">✔ <strong>Day before:</strong> **the Windows image is big (several GB) — start its download the day before**, not in this session; Sim VLAN isolation re-verified with one negative test.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-57"><span class="txt"><strong>Session 57 — Wed 3 Mar 2027</strong> — Predict before you attack</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-57-0"><span class="txt">30 min: choose 3 Atomic Red Team tests (e.g. discovery commands, scheduled-task persistence, credential-access simulation). For each, **write down in advance** exactly which telemetry and alerts you expect to see, and where. No attacks run today.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-57"><span class="txt">✔ <strong>Day before:</strong> Atomic Red Team available on the Windows VM (installed in the Sim VLAN only); snapshot from Session 56 exists to roll back to.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-58"><span class="txt"><strong>Session 58 — Fri 5 Mar 2027</strong> — Run the tests, part 1</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-58-0"><span class="txt">20 min: run test 1 and 2 inside the Sim VLAN only.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-58-1"><span class="txt">10 min: collect what actually fired vs your predictions; note every gap honestly.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-58"><span class="txt">✔ <strong>Day before:</strong> predictions written (Session 57); Wazuh + Velociraptor dashboards open and healthy.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-59"><span class="txt"><strong>Session 59 — Sat 6 Mar 2027</strong> — Run the tests, part 2 + write a behavioural detection</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-59-0"><span class="txt">15 min: run test 3; finish the gap list.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-59-1"><span class="txt">15 min: write one behavioural detection (a sequence, not a signature — e.g. a process spawning a shell, then making its first-ever outbound connection) as a Wazuh rule or scheduled osquery query.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-59"><span class="txt">✔ <strong>Day before:</strong> gap list from Session 58 written in the repo.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-60"><span class="txt"><strong>Session 60 — Sun 7 Mar 2027</strong> — Phase 6 gate: present a case</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-60-0"><span class="txt">30 min: present one atomic test as a full case to your mentor: technique → telemetry produced → where you saw it → the detection you wrote → how you&#x27;d respond (isolate, collect, eradicate) if it were real.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-60"><span class="txt">✔ <strong>Day before:</strong> case notes + screenshots gathered; Windows VM rolled back to the clean snapshot after testing.</span></label>
+</div></div>
+<label class="item gate"><input type="checkbox" data-key="gate-6"><span class="txt">🎓 <strong>Phase 6 gate</strong> — as above — plus explain EDR vs antivirus vs SIEM in two plain minutes.</span></label>
+</section>
+<section><h2>Phase 7 — Harden, Break, Rebuild (Sessions 61–66)</h2>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-61"><span class="txt"><strong>Session 61 — Wed 10 Mar 2027</strong> — Backups with restic</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-61-0"><span class="txt">20 min: initialise an encrypted restic repository (external drive or second storage) and back up Terraform state, tfvars.example-safe configs, and the repo.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-61-1"><span class="txt">10 min: write the backup schedule down in the tracker.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-61"><span class="txt">✔ <strong>Day before:</strong> backup target chosen and connected (external drive / second disk / NAS share); restic password goes to your password manager + sealed envelope, never the repo.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-62"><span class="txt"><strong>Session 62 — Fri 12 Mar 2027</strong> — Prove a restore</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-62-0"><span class="txt">20 min: restore one real file (an OPNsense config or your Terraform state) to a test location and verify it.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-62-1"><span class="txt">10 min: automate the backup as a scheduled job on the host.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-62"><span class="txt">✔ <strong>Day before:</strong> Session 61&#x27;s backup completed; you know which single file you&#x27;ll restore.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-63"><span class="txt"><strong>Session 63 — Sat 13 Mar 2027</strong> — Export the crown jewels</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-63-0"><span class="txt">25 min: export the OPNsense config and the Keycloak realm; add both to the restic routine.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-63-1"><span class="txt">5 min: run the backup again and verify the exports are in it.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-63"><span class="txt">✔ <strong>Day before:</strong> you know where OPNsense and Keycloak keep their export functions (find the screens in Session 62&#x27;s downtime if needed).</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-64"><span class="txt"><strong>Session 64 — Sun 14 Mar 2027</strong> — Drift audit</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-64-0"><span class="txt">20 min: `terraform plan` across the whole lab must be clean; investigate any diff like an incident and fix it in code.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-64-1"><span class="txt">10 min: journal the audit.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-64"><span class="txt">✔ <strong>Day before:</strong> all lab services running; git status clean before you start.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-65"><span class="txt"><strong>Session 65 — Wed 17 Mar 2027</strong> — Graduation drill, part 1: destroy</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-65-0"><span class="txt">10 min: verify backups one last time (list snapshots).</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-65-1"><span class="txt">20 min: `terraform destroy` the lab environment. Feel the fear; the code is the safety net.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-65"><span class="txt">✔ <strong>Day before:</strong> **non-negotiable** — restic snapshots verified, exports from Session 63 confirmed restorable, and you have no other plans for the lab that evening.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-66"><span class="txt"><strong>Session 66 — Fri 19 Mar 2027</strong> — Graduation drill, part 2: rebuild</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-66-0"><span class="txt">25 min: rebuild from code + docs alone; start a timer; note every place the docs failed you.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-66-1"><span class="txt">5 min: fix the single worst doc gap immediately.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-66"><span class="txt">✔ <strong>Day before:</strong> destroy completed; your docs (and only your docs) are what you&#x27;ll follow — no mentor hints in this session, that&#x27;s the test.</span></label>
+</div></div>
+<label class="item gate"><input type="checkbox" data-key="gate-7"><span class="txt">🎓 <strong>Phase 7 gate</strong> — your rebuild time, the list of what broke, and your restore-test evidence; plus two clean weekly `terraform plan` outputs after the rebuild.</span></label>
+</section>
+<section><h2>Phase 8 — Learn and Earn (Sessions 67–70)</h2>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-67"><span class="txt"><strong>Session 67 — Sat 20 Mar 2027</strong> — Portfolio polish</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-67-0"><span class="txt">25 min: pin the repo on your GitHub profile; write the profile README: what you built, the architecture diagram, links to your best evidence.</span></label>
+<label class="item sub"><input type="checkbox" data-key="task-67-1"><span class="txt">5 min: final `git push` of everything.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-67"><span class="txt">✔ <strong>Day before:</strong> repo fully committed after the rebuild; screenshots folder organised.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-68"><span class="txt"><strong>Session 68 — Sun 21 Mar 2027</strong> — Write-up 1: the network build</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-68-0"><span class="txt">30 min: turn your Phase 2–3 journals into a blog draft (this doubles as Substack material for your other goal): problem, design, what broke, what you learned.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-68"><span class="txt">✔ <strong>Day before:</strong> Phase 2–3 journal entries and negative-test screenshots located.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-69"><span class="txt"><strong>Session 69 — Wed 24 Mar 2027</strong> — Write-up 2: the EDR case</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-69-0"><span class="txt">30 min: turn your Phase 6 gate case into a blog draft: technique, telemetry, detection, response.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-69"><span class="txt">✔ <strong>Day before:</strong> Phase 6 case notes + detection rule located.</span></label>
+</div></div>
+<div class="session">
+<label class="item head"><input type="checkbox" data-key="session-70"><span class="txt"><strong>Session 70 — Fri 26 Mar 2027</strong> — Pick your first earn path</span></label>
+<div class="tasks">
+<label class="item sub"><input type="checkbox" data-key="task-70-0"><span class="txt">30 min: with your mentor, review `docs/learn-and-earn.md`, pick ONE first path (junior SOC/network role, freelance small-business work, tutoring/content, or bounties as a stretch), and set its first three milestones in the tracker.</span></label>
+<label class="item sub prep"><input type="checkbox" data-key="prep-70"><span class="txt">✔ <strong>Day before:</strong> both write-ups drafted; an honest read of the earn doc&#x27;s expectations sections.</span></label>
+</div></div>
+<label class="item gate"><input type="checkbox" data-key="gate-8"><span class="txt">🎓 <strong>Final gate</strong> — a stranger landing on your GitHub can understand what you built and verify it from your evidence. That&#x27;s the bar — and by Session 70, you&#x27;ll clear it.</span></label>
+</section>
+  <p class="note">Standing rules: every session ends with a journal entry + a git commit. Stuck more than 15 minutes? Stop, write down exactly where, and ask your mentor. Missed a day? The plan slides — sessions are a sequence, not a streak.</p>
+  <button class="reset" id="reset">Reset all ticks</button>
+</div>
+<script>
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('input[type=checkbox][data-key]'));
+  var store = {};
+  try { store = JSON.parse(localStorage.getItem('labTrackerDetailed') || '{}'); } catch (e) { store = {}; }
+  function refresh() {
+    var sessions = boxes.filter(function(b) { return b.getAttribute('data-key').indexOf('session-') === 0; });
+    var done = sessions.filter(function(b) { return b.checked; }).length;
+    var tasks = boxes.filter(function(b) { return b.checked; }).length;
+    document.getElementById('done-count').textContent = done;
+    document.getElementById('task-count').textContent = tasks;
+    var pct = Math.round(done / sessions.length * 100);
+    document.getElementById('pct').textContent = pct;
+    document.getElementById('bar-fill').style.width = pct + '%';
+  }
+  boxes.forEach(function(b) {
+    var k = b.getAttribute('data-key');
+    if (store[k]) b.checked = true;
+    b.addEventListener('change', function() {
+      store[k] = b.checked;
+      try { localStorage.setItem('labTrackerDetailed', JSON.stringify(store)); } catch (e) {}
+      refresh();
+    });
+  });
+  document.getElementById('reset').addEventListener('click', function() {
+    if (!confirm('Clear all ticks?')) return;
+    boxes.forEach(function(b) { b.checked = false; });
+    store = {};
+    try { localStorage.removeItem('labTrackerDetailed'); } catch (e) {}
+    refresh();
+  });
+  refresh();
+</script>
+</body>
+</html>
